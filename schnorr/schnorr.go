@@ -78,15 +78,18 @@ func (p *SchnorrProver) Sign(m *big.Int) ([]*big.Int, error) {
 	return proof, nil
 }
 
-func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) bool {
+func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) (remComm, remResp []*big.Int, valid bool) {
+	valid = false
 	if len(resp) != 1 {
-		return false
+		return comm, resp, false
 	}
 	s := resp[0]
+	remResp = resp[1:]
 	if len(comm) != 1 {
-		return false
+		return comm, resp, false
 	}
 	rc := comm[0]
+	remComm = comm[1:]
 	// Could be improved by multi-base exp.
 	// r_v = G**s * Pub**c = G**(s + Priv * c) = g**r (mod P)
 	rv := big.NewInt(0)
@@ -98,9 +101,10 @@ func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) b
 	rv.Mod(rv, v.P)
 
 	if rv.Cmp(rc) != 0 {
-		return false
+		return
 	}
-	return true
+	valid = true
+	return
 }
 
 func (v *SchnorrVerifier) VerifySig(m *big.Int, resp []*big.Int) bool {

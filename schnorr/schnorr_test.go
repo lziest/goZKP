@@ -19,7 +19,7 @@ func TestProverVerifierSanity(t *testing.T) {
 	for i = 1; i < 7; i++ {
 		c := big.NewInt(i)
 		resp, _ := prover.Prove(c)
-		res := verifier.Verify(comm, c, resp)
+		_, _, res := verifier.Verify(comm, c, resp)
 		if res != true {
 			t.Fatal("Failed to verify minimal test.")
 		}

@@ -15,7 +15,7 @@ type ZKPSigner interface {
 }
 
 type Verifier interface {
-	Verify(comm []*big.Int, c *big.Int, resp []*big.Int) bool
+	Verify(comm []*big.Int, c *big.Int, resp []*big.Int) (remComm, remResp []*big.Int, valid bool)
 }
 
 type ZKPVerifier interface {
