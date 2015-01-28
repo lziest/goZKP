@@ -1,4 +1,4 @@
-package schnoor
+package schnorr
 
 import (
 	"crypto/rand"
@@ -50,6 +50,10 @@ func (p *SchnorrProver) Commit() ([]*big.Int, error) {
 }
 
 func (p *SchnorrProver) Prove(c *big.Int) ([]*big.Int, error) {
+	if c.Cmp(p.Q) > 0 {
+		c.Mod(c, p.Q)
+	}
+
 	// tmp = (r - c * p.Priv) mod Q
 	log.Print("c = ", c.Int64())
 	tmp := big.NewInt(0)
