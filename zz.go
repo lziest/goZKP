@@ -5,6 +5,7 @@ import (
 	"math/big"
 )
 
+// ZZ represents a multipicative group of Z_p.
 type ZZ struct {
 	g      *big.Int
 	modulo *big.Int
@@ -25,7 +26,7 @@ func (z *ZZ) Mul(x *ZZ) (*ZZ, error) {
 
 func (z *ZZ) Exp(x *big.Int) *ZZ {
 	z.g.Exp(z.g, x, z.modulo)
-	return x
+	return z
 }
 
 func (z *ZZ) Inverse() *ZZ {

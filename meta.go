@@ -9,12 +9,12 @@ type MetaProver struct {
 }
 
 type MetaVerifier struct {
-	subverifier []Verifier
+	subverifiers []Verifier
 }
 
 func (p *MetaProver) Commit() ([]*big.Int, error) {
 	ret := []*big.Int{}
-	for _, prover := range subprovers {
+	for _, prover := range p.subprovers {
 		c, err := prover.Commit()
 		if err != nil {
 			return nil, err
@@ -28,7 +28,7 @@ func (p *MetaProver) Commit() ([]*big.Int, error) {
 // commitments on shared private variables are consistent/same.
 func (p *MetaProver) Prove(c *big.Int) ([]*big.Int, error) {
 	ret := []*big.Int{}
-	for _, prover := range subprovers {
+	for _, prover := range p.subprovers {
 		p, err := prover.Prove(c)
 		if err != nil {
 			return nil, err
@@ -41,12 +41,14 @@ func (p *MetaProver) Prove(c *big.Int) ([]*big.Int, error) {
 func (v *MetaVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) bool {
 	remComm := comm
 	remResp := resp
-	for _, verifier := range subverifiers {
-		remComm, remResp, valid := verifier.verify(remComm, c, remResp)
-		if !valid {
+	isValid := true
+	for _, verifier := range v.subverifiers {
+		remComm, remResp, isValid = verifier.Verify(remComm, c, remResp)
+		if !isValid {
 			return false
 		}
 	}
+	return isValid
 }
 
 // An example of MetaSigner will have a method as follows:

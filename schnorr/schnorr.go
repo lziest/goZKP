@@ -5,14 +5,15 @@ import (
 	"crypto/sha1"
 	"log"
 	"math/big"
+
+	"github.com/lziest/goZKP"
 )
 
 type SchnorrProver struct {
-	P    *big.Int // Zp as Group
-	G    *big.Int // Group generator g
-	Q    *big.Int // G's order
-	Priv *big.Int // private key
-	r    *big.Int // random value for commitment
+	P    *big.Int  // Zp as Group
+	G    *big.Int  // Group generator g
+	Q    *big.Int  // G's order
+	Priv *goZKP.Zr // Private Key proof unit
 }
 
 type SchnorrVerifier struct {
@@ -35,12 +36,11 @@ func Hash(q *big.Int, values ...*big.Int) *big.Int {
 }
 
 func (p *SchnorrProver) Commit() ([]*big.Int, error) {
-	r, err := rand.Int(rand.Reader, p.Q)
+	r, err := p.Priv.Commit()
 	if err != nil {
 		return nil, err
 	}
-	log.Print("r = ", r.Int64())
-	p.r = r
+
 	g := big.NewInt(0)
 	g.Exp(p.G, r, p.P)
 	log.Print("g = ", p.G.Int64())
@@ -50,17 +50,9 @@ func (p *SchnorrProver) Commit() ([]*big.Int, error) {
 }
 
 func (p *SchnorrProver) Prove(c *big.Int) ([]*big.Int, error) {
-	if c.Cmp(p.Q) > 0 {
-		c.Mod(c, p.Q)
-	}
-
 	// tmp = (r - c * p.Priv) mod Q
 	log.Print("c = ", c.Int64())
-	tmp := big.NewInt(0)
-	tmp.Mul(c, p.Priv)
-	tmp.Mod(tmp, p.Q)
-	tmp.Sub(p.r, tmp)
-	tmp.Mod(tmp, p.Q)
+	tmp := p.Priv.Prove(c)
 	ret := []*big.Int{tmp}
 	log.Print("resp = ", tmp.Int64())
 	return ret, nil
@@ -137,8 +129,7 @@ func (v *SchnorrVerifier) VerifySig(m *big.Int, resp []*big.Int) bool {
 
 }
 
-func RandMessage() *big.Int {
-	max := big.NewInt(160)
+func RandMessage(max *big.Int) *big.Int {
 	n, _ := rand.Int(rand.Reader, max)
 	return n
 }
