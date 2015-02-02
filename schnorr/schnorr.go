@@ -76,12 +76,12 @@ func (p *SchnorrProver) Sign(m *big.Int) ([]*big.Int, error) {
 
 func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) (remComm, remResp []*big.Int, valid bool) {
 	valid = false
-	if len(resp) != 1 {
+	if len(resp) < 1 {
 		return comm, resp, false
 	}
 	s := resp[0]
 	remResp = resp[1:]
-	if len(comm) != 1 {
+	if len(comm) < 1 {
 		return comm, resp, false
 	}
 	rc := comm[0]
