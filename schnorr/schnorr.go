@@ -74,15 +74,15 @@ func (p *SchnorrProver) Sign(m *big.Int) ([]*big.Int, error) {
 	return proof, nil
 }
 
-func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) (remComm, remResp []*big.Int, valid bool) {
+func (v *SchnorrVerifier) ConsumeVerify(comm []*big.Int, c *big.Int, resp []*big.Int) (valid bool, remComm, remResp []*big.Int) {
 	valid = false
 	if len(resp) < 1 {
-		return comm, resp, false
+		return false, comm, resp
 	}
 	s := resp[0]
 	remResp = resp[1:]
 	if len(comm) < 1 {
-		return comm, resp, false
+		return false, comm, resp
 	}
 	rc := comm[0]
 	remComm = comm[1:]
@@ -103,26 +103,48 @@ func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) (
 	return
 }
 
+func (v *SchnorrVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) bool {
+	valid, remComm, remResp := v.ConsumeVerify(comm, c, resp)
+
+	if len(remComm) != 0 || len(remResp) != 0 || !valid {
+		return false
+	}
+
+	return true
+}
+
+func (v *SchnorrVerifier) RecoverCommitment(chlg *big.Int, resp []*big.Int) (rc *big.Int, remResp []*big.Int) {
+	s := resp[0]
+	remResp = resp[1:]
+	// Could be improved by multi-base exp.
+	// r_v = G**s * Pub**c = G**(s + Priv * c) = g**r (mod P)
+	rc = big.NewInt(0)
+	rc.Exp(v.G, s, v.P)
+	tmp := big.NewInt(0)
+	tmp.Exp(v.Pub, chlg, v.P)
+
+	rc.Mul(rc, tmp)
+	rc.Mod(rc, v.P)
+
+	return rc, remResp
+}
+
 func (v *SchnorrVerifier) VerifySig(m *big.Int, resp []*big.Int) bool {
 	if len(resp) != 2 {
 		return false
 	}
-	s := resp[0]
-	e := resp[1]
+	remResp := resp[:1]
+	chlg := resp[1]
 
-	// Could be improved by multi-base exp.
-	// r_v = G**s * Pub**c = G**(s + Priv * c) = g**r (mod P)
-	rv := big.NewInt(0)
-	rv.Exp(v.G, s, v.P)
-	tmp := big.NewInt(0)
-	tmp.Exp(v.Pub, e, v.P)
+	rv, remResp := v.RecoverCommitment(chlg, remResp)
 
-	rv.Mul(rv, tmp)
-	rv.Mod(rv, v.P)
+	if len(remResp) != 0 {
+		return false
+	}
 
 	// c = H(M, rv)
 	c := Hash(v.Q, m, rv)
-	if c.Cmp(e) != 0 {
+	if c.Cmp(chlg) != 0 {
 		return false
 	}
 	return true

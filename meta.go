@@ -43,7 +43,7 @@ func (v *MetaVerifier) Verify(comm []*big.Int, c *big.Int, resp []*big.Int) bool
 	remResp := resp
 	isValid := true
 	for _, verifier := range v.subverifiers {
-		remComm, remResp, isValid = verifier.Verify(remComm, c, remResp)
+		isValid, remComm, remResp = verifier.ConsumeVerify(remComm, c, remResp)
 		if !isValid {
 			return false
 		}
