@@ -1,7 +1,6 @@
 package schnorr
 
 import (
-	"crypto/rand"
 	"crypto/sha1"
 	"log"
 	"math/big"
@@ -149,9 +148,4 @@ func (v *SchnorrVerifier) VerifySig(m *big.Int, resp []*big.Int) bool {
 	}
 	return true
 
-}
-
-func RandMessage(max *big.Int) *big.Int {
-	n, _ := rand.Int(rand.Reader, max)
-	return n
 }

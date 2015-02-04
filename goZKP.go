@@ -1,6 +1,7 @@
 package goZKP
 
 import (
+	"crypto/rand"
 	"math/big"
 )
 
@@ -37,4 +38,9 @@ type ZKPVerifier interface {
 	RecoverCommitment(chlg *big.Int, resp []*big.Int) (rc *big.Int, remResp []*big.Int)
 	// VerifySig verifies a ZKP signature.
 	VerifySig(m *big.Int, sig []*big.Int) bool
+}
+
+func RandMessage(max *big.Int) *big.Int {
+	n, _ := rand.Int(rand.Reader, max)
+	return n
 }
